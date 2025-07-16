@@ -1,0 +1,22 @@
+artifact_path: /home/mike-adamski/Dev/projects/learning-mlops/mlruns/1/models/m-4c175a326aab4b79afd44229fc28357c/artifacts
+flavors:
+  python_function:
+    data: model.xgb
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.xgboost
+    python_version: 3.9.23
+  xgboost:
+    code: null
+    data: model.xgb
+    model_class: xgboost.core.Booster
+    model_format: xgb
+    xgb_version: 2.1.4
+mlflow_version: 3.1.1
+model_id: m-4c175a326aab4b79afd44229fc28357c
+model_size_bytes: 3871383
+model_uuid: m-4c175a326aab4b79afd44229fc28357c
+prompts: null
+run_id: 97a33d8542fe4098a9b7a765eba70446
+utc_time_created: '2025-07-13 01:32:33.805338'
