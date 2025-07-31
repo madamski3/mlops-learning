@@ -12,7 +12,10 @@ from sklearn.metrics import root_mean_squared_error
 
 import mlflow
 
-mlflow.set_tracking_uri("http://localhost:5000")
+# TRACKING_SERVER_URI='s3://mlops-learning-madamski/artifacts/'
+TRACKING_SERVER_URI='http://localhost:5000'
+
+mlflow.set_tracking_uri(TRACKING_SERVER_URI)
 mlflow.set_experiment("nyc-taxi-experiment")
 
 models_folder = Path('models')
