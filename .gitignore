@@ -3,6 +3,11 @@ mlruns/
 __pycache__/
 test2.py
 .env
+mlflow.db
 
 # bash files used for local testing
 scripts/
+
+# Artifacts cached locally
+data/
+models/
