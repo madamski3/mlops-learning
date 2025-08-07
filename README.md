@@ -1,6 +1,8 @@
 # NYC Taxi Trip Duration Prediction - MLOps Pipeline
 
-A complete MLOps pipeline for predicting NYC taxi trip duration using XGBoost, with real-time inference via AWS Lambda and Kinesis.
+The purpose of this project is to teach myself skills in MLOps. My goal is to develop the expertise to deploy and manage the full lifecycle of production-grade machine learning systems. To get hands on practice, I have built a complete MLOps pipeline for predicting NYC taxi trip duration using XGBoost, with real-time inference via AWS Lambda and Kinesis. Note: This project is not concerned with the accuracy/value of the model itself (and indeed, it sucks), only the ML Operations surrounding it.
+
+This project will continue to evolve as I build my skillset.
 
 ## Architecture Overview
 
