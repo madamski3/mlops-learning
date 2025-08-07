@@ -1,9 +1,11 @@
 mlops-zoomcamp/
 mlruns/
 __pycache__/
-test2.py
+test.py
 .env
 mlflow.db
+.claude/
+.pytest_cache/
 
 # bash files used for local testing
 scripts/
