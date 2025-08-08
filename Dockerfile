@@ -18,7 +18,7 @@ FROM public.ecr.aws/lambda/python:3.13
 COPY --from=builder /opt/python /opt/python
 ENV PYTHONPATH=/opt/python:$PYTHONPATH
 
-# Copy lambda function
-COPY lambda_function.py ${LAMBDA_TASK_ROOT}
+# Copy python scripts
+COPY lambda_function.py model.py ${LAMBDA_TASK_ROOT}/
 
 CMD ["lambda_function.lambda_handler"]
