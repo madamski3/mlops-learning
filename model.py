@@ -7,23 +7,17 @@ import pickle
 
 import mlflow
 
-# kinesis_client = boto3.client('kinesis')
 
-PREDICTIONS_STREAM_NAME = os.getenv('PREDICTIONS_STREAM_NAME', 'ride-predictions')
-RUN_ID = os.getenv('RUN_ID', '70123647ea1f49a2889fcff4d7032960')
-MODEL_ID = os.getenv('MODEL_ID', 'm-b312b4c1155a4197af44793c03b32ad4') 
-TEST_RUN = os.getenv('TEST_RUN', 'False').lower() == 'true'
+def get_model_location(run_id, model_id):
+    model_location = f's3://mlops-learning-madamski/1/models/{model_id}/artifacts'
+    preprocessor_location = f's3://mlops-learning-madamski/1/{run_id}/artifacts/preprocessor/preprocessor.b'
+    return model_location, preprocessor_location
 
-
-
-def load_model():
-    logged_model = f's3://mlops-learning-madamski/1/models/{MODEL_ID}/artifacts'
-    preprocessor_path = f's3://mlops-learning-madamski/1/{RUN_ID}/artifacts/preprocessor/preprocessor.b'
-
-    model = mlflow.pyfunc.load_model(logged_model)
-
-    local_preprocessor_path = mlflow.artifacts.download_artifacts(preprocessor_path)
-    with open(local_preprocessor_path, 'rb') as f:
+def load_model(run_id, model_id):
+    model_location, preprocessor_location = get_model_location(run_id, model_id)    
+    model = mlflow.pyfunc.load_model(model_location)
+    local_path_to_preproc = mlflow.artifacts.download_artifacts(preprocessor_location)
+    with open(local_path_to_preproc, 'rb') as f:
         preprocessor = pickle.load(f)
     return model, preprocessor
 
@@ -34,7 +28,7 @@ def base64_decode(encoded_data):
 
 class ModelService():
     
-    def __init__(self, model, preprocessor, run_id=RUN_ID, model_id=MODEL_ID, test_run=TEST_RUN, callbacks=None):
+    def __init__(self, model, preprocessor, run_id, model_id, test_run, callbacks=None):
         self.model = model
         self.preprocessor = preprocessor
         self.run_id = run_id
@@ -51,8 +45,7 @@ class ModelService():
         return float(pred[0])
     
     def lambda_handler(self, event):
-        print('EVENT: ', event)
-
+        
         predictions = []
 
         for record in event['Records']:
@@ -91,7 +84,7 @@ class KinesisCallback():
     def __init__(
             self,
             kinesis_client,
-            prediction_stream_name=PREDICTIONS_STREAM_NAME
+            prediction_stream_name
         ):
         self.prediction_stream_name = prediction_stream_name
         self.kinesis_client = kinesis_client
@@ -116,6 +109,10 @@ def init(prediction_stream_name:str, run_id:str, model_id:str, test_run:bool):
         kinesis_callback = KinesisCallback(kinesis_client, prediction_stream_name)
         callbacks.append(kinesis_callback.put_record)
         
-    model, preprocessor = load_model()
+    if test_run:
+        model, preprocessor = None, None
+    else:
+        model, preprocessor = load_model(run_id, model_id)
+        
     model_service = ModelService(model, preprocessor, run_id, model_id, test_run, callbacks)
     return model_service
