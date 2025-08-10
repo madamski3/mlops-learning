@@ -8,3 +8,4 @@ psutil==5.9.0
 scipy==1.15.3
 xgboost==3.0.3
 pytest==8.4.1
+deepdiff==8.5.0

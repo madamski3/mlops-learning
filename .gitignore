@@ -5,6 +5,7 @@ test.py
 .env
 mlflow.db
 .claude/
+CLAUDE.md
 .pytest_cache/
 
 # bash files used for local testing

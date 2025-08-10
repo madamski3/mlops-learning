@@ -8,6 +8,8 @@ import pickle
 import mlflow
 
 
+
+
 def get_model_location(run_id, model_id):
     model_location = f's3://mlops-learning-madamski/1/models/{model_id}/artifacts'
     preprocessor_location = f's3://mlops-learning-madamski/1/{run_id}/artifacts/preprocessor/preprocessor.b'
@@ -24,6 +26,11 @@ def load_model(run_id, model_id):
 def base64_decode(encoded_data):
     decoded_data = base64.b64decode(encoded_data).decode('utf-8')
     return json.loads(decoded_data)
+
+def create_kinesis_client():
+    endpoint_url = os.getenv('KINESIS_ENDPOINT_URL')
+    kinesis_client = boto3.client('kinesis', endpoint_url=endpoint_url)
+    return kinesis_client
 
 
 class ModelService():
@@ -105,7 +112,7 @@ def init(prediction_stream_name:str, run_id:str, model_id:str, test_run:bool):
     callbacks = []
     
     if not test_run:
-        kinesis_client = boto3.client('kinesis')
+        kinesis_client = create_kinesis_client()
         kinesis_callback = KinesisCallback(kinesis_client, prediction_stream_name)
         callbacks.append(kinesis_callback.put_record)
         

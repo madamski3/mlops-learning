@@ -12,7 +12,7 @@ def test_prepare_features():
     mock_preprocessor = MagicMock()
     mock_preprocessor.transform.return_value = sparse.csr_matrix([[1, 0, 1] + [0] * 5000])
     
-    model_service = model.ModelService(None, mock_preprocessor)
+    model_service = model.ModelService(None, mock_preprocessor, "test-run-id", "test-model-id", True)
     
     ride_data = {
         "PU_DO": "43_151",
@@ -43,7 +43,7 @@ def test_predict_returns_float():
     mock_preprocessor = MagicMock()
     mock_preprocessor.transform.return_value = sparse.csr_matrix([[1, 0, 1] + [0] * 100])
     
-    model_service = model.ModelService(mock_model, mock_preprocessor)
+    model_service = model.ModelService(mock_model, mock_preprocessor, "test-run-id", "test-model-id", True)
     ride_data = {"PU_DO": "43_151", "trip_distance": 18.4}
     features = model_service.process_features(ride_data)
     prediction = model_service.predict(features)
@@ -59,7 +59,7 @@ def test_predict_consistency():
     mock_preprocessor = MagicMock()
     mock_preprocessor.transform.return_value = sparse.csr_matrix([[1, 0, 1] + [0] * 100])
     
-    model_service = model.ModelService(mock_model, mock_preprocessor)
+    model_service = model.ModelService(mock_model, mock_preprocessor, "test-run-id", "test-model-id", True)
     ride_data = {"PU_DO": "43_151", "trip_distance": 18.4}
     features = model_service.process_features(ride_data)
     
@@ -76,7 +76,7 @@ def test_lambda_handler_single_record():
     mock_preprocessor = MagicMock()
     mock_preprocessor.transform.return_value = sparse.csr_matrix([[1, 0, 1] + [0] * 100])
     
-    model_service = model.ModelService(mock_model, mock_preprocessor)
+    model_service = model.ModelService(mock_model, mock_preprocessor, "test-run-id", "test-model-id", True)
     
     ride_data = {"PU_DO": "43_151", "trip_distance": 18.4}
     ride_event = {"ride": ride_data, "ride_id": "test_ride_123"}
@@ -110,7 +110,7 @@ def test_lambda_handler_multiple_records():
     mock_preprocessor = MagicMock()
     mock_preprocessor.transform.return_value = sparse.csr_matrix([[1, 0, 1] + [0] * 100])
     
-    model_service = model.ModelService(mock_model, mock_preprocessor)
+    model_service = model.ModelService(mock_model, mock_preprocessor, "test-run-id", "test-model-id", True)
     
     records = []
     for i in range(3):
@@ -139,7 +139,7 @@ def test_process_features_missing_fields():
     mock_preprocessor = MagicMock()
     mock_preprocessor.transform.side_effect = KeyError("trip_distance")
     
-    model_service = model.ModelService(None, mock_preprocessor)
+    model_service = model.ModelService(None, mock_preprocessor, "test-run-id", "test-model-id", True)
     incomplete_ride = {"PU_DO": "43_151"}  # missing trip_distance
     
     with pytest.raises(KeyError):
@@ -150,7 +150,7 @@ def test_lambda_handler_invalid_json():
     """Test lambda_handler with invalid JSON data"""
     mock_model = MagicMock()
     mock_preprocessor = MagicMock()
-    model_service = model.ModelService(mock_model, mock_preprocessor)
+    model_service = model.ModelService(mock_model, mock_preprocessor, "test-run-id", "test-model-id", True)
     
     invalid_data = base64.b64encode("invalid json".encode('utf-8')).decode('utf-8')
     event = {'Records': [{'kinesis': {'data': invalid_data}}]}
@@ -163,7 +163,7 @@ def test_lambda_handler_missing_ride_fields():
     """Test lambda_handler with missing ride or ride_id fields"""
     mock_model = MagicMock()
     mock_preprocessor = MagicMock()
-    model_service = model.ModelService(mock_model, mock_preprocessor)
+    model_service = model.ModelService(mock_model, mock_preprocessor, "test-run-id", "test-model-id", True)
     
     incomplete_event = {"ride_id": "test_123"}  # missing 'ride'
     
@@ -183,7 +183,7 @@ def test_process_features_negative_trip_distance():
     mock_preprocessor = MagicMock()
     mock_preprocessor.transform.return_value = sparse.csr_matrix([[1, 0, -1] + [0] * 100])
     
-    model_service = model.ModelService(None, mock_preprocessor)
+    model_service = model.ModelService(None, mock_preprocessor, "test-run-id", "test-model-id", True)
     ride_data = {"PU_DO": "43_151", "trip_distance": -5.0}
     features = model_service.process_features(ride_data)
     
@@ -199,7 +199,7 @@ def test_prediction_event_structure():
     mock_preprocessor = MagicMock()
     mock_preprocessor.transform.return_value = sparse.csr_matrix([[1, 0, 1] + [0] * 100])
     
-    model_service = model.ModelService(mock_model, mock_preprocessor)
+    model_service = model.ModelService(mock_model, mock_preprocessor, "70123647ea1f49a2889fcff4d7032960", "test-model-id", True)
     
     ride_data = {"PU_DO": "43_151", "trip_distance": 18.4}
     ride_event = {"ride": ride_data, "ride_id": "test_ride_123"}
