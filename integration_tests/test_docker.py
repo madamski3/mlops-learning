@@ -15,7 +15,7 @@ def test_lambda_invocation():
 
     with open('output_event.json', 'r', encoding='utf-8') as f_o:
         expected_response = json.load(f_o)
-        
+
     diff = DeepDiff(actual_response, expected_response, significant_digits=1)
     assert 'type_changes' not in diff
     assert 'values_changed' not in diff

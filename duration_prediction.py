@@ -1,19 +1,17 @@
-#!/usr/bin/env python
-# coding: utf-8
+# pylint: disable=invalid-name, too-many-locals
 
+import os
 import pickle
 from pathlib import Path
 
+import mlflow
 import pandas as pd
 import xgboost as xgb
-
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.metrics import root_mean_squared_error
 
-import mlflow
-
 # TRACKING_SERVER_URI='s3://mlops-learning-madamski/artifacts/'
-TRACKING_SERVER_URI='http://localhost:5000'
+TRACKING_SERVER_URI = 'http://localhost:5000'
 
 mlflow.set_tracking_uri(TRACKING_SERVER_URI)
 mlflow.set_experiment("nyc-taxi-experiment")
@@ -30,13 +28,15 @@ training_outputs_folder.mkdir(exist_ok=True)
 
 def read_dataframe(year, month):
     file_path = f'./data/green_tripdata_{year}-{month:02d}.csv'
-    url = f'https://d37ci6vzurychx.cloudfront.net/trip-data/green_tripdata_{year}-{month:02d}.parquet'
-    
+    url = (
+        f'https://d37ci6vzurychx.cloudfront.net/trip-data/green_tripdata_{year}-{month:02d}.parquet'
+    )
+
     if Path(file_path).exists():
-        print(f"Dataset already cached. Reading from local storage...")
+        print("Dataset already cached. Reading from local storage...")
         df = pd.read_csv(file_path)
     else:
-        print(f"Downloading dataset from URL...")
+        print("Downloading dataset from URL...")
         df = pd.read_parquet(url)
 
         df['duration'] = df.lpep_dropoff_datetime - df.lpep_pickup_datetime
@@ -48,7 +48,7 @@ def read_dataframe(year, month):
         df[categorical] = df[categorical].astype(str)
 
         df['PU_DO'] = df['PULocationID'] + '_' + df['DOLocationID']
-        
+
         df.to_csv(file_path)
 
     return df
@@ -69,7 +69,7 @@ def create_X(df, dv=None):
 
 
 def train_model(X_train, y_train, X_val, y_val, dv, val_year, val_month):
-    with mlflow.start_run() as run:
+    with mlflow.start_run() as training_run:
         train = xgb.DMatrix(X_train, label=y_train)
         valid = xgb.DMatrix(X_val, label=y_val)
 
@@ -80,7 +80,7 @@ def train_model(X_train, y_train, X_val, y_val, dv, val_year, val_month):
             'objective': 'reg:linear',
             'reg_alpha': 0.018060244040060163,
             'reg_lambda': 0.011658731377413597,
-            'seed': 42
+            'seed': 42,
         }
         all_params = run_params
         all_params['val_data_year'] = val_year
@@ -93,50 +93,63 @@ def train_model(X_train, y_train, X_val, y_val, dv, val_year, val_month):
             dtrain=train,
             num_boost_round=30,
             evals=[(valid, 'validation')],
-            early_stopping_rounds=50
+            early_stopping_rounds=50,
         )
 
-        run_id = run.info.run_id
-        
+        run_id = training_run.info.run_id
+
         y_pred_train = booster.predict(train)
         y_pred_val = booster.predict(valid)
-        
+
         rmse = root_mean_squared_error(y_val, y_pred_val)
         mlflow.log_metric("rmse", rmse)
-        
+
         # Create a simple dataset with trip_distance and predictions
         feature_names = dv.get_feature_names_out()
         trip_distance_idx = feature_names.tolist().index('trip_distance')
-        
-        training_dataset = pd.DataFrame({
-            'trip_distance': X_train[:, trip_distance_idx].toarray().flatten(),
-            'actual_duration': y_train,
-            'predicted_duration': y_pred_train,
-            'prediction_error': y_pred_train - y_train,
-            'absolute_error': abs(y_pred_train - y_train)
-        })
-        validation_dataset = pd.DataFrame({
-            'trip_distance': X_val[:, trip_distance_idx].toarray().flatten(),
-            'actual_duration': y_val,
-            'predicted_duration': y_pred_val,
-            'prediction_error': y_pred_val - y_val,
-            'absolute_error': abs(y_pred_val - y_val)
-        })
-    
-        run_id = run.info.run_id
-        
-        predictions_file = f"./data/training_outputs/{run_id}_predictions.csv"
-        validation_dataset.to_csv(predictions_file, index=False)
-        print(f"Validation dataset with predictions saved to: {predictions_file}")
+
+        training_dataset = pd.DataFrame(
+            {
+                'trip_distance': X_train[:, trip_distance_idx].toarray().flatten(),
+                'actual_duration': y_train,
+                'predicted_duration': y_pred_train,
+                'prediction_error': y_pred_train - y_train,
+                'absolute_error': abs(y_pred_train - y_train),
+            }
+        )
+        validation_dataset = pd.DataFrame(
+            {
+                'trip_distance': X_val[:, trip_distance_idx].toarray().flatten(),
+                'actual_duration': y_val,
+                'predicted_duration': y_pred_val,
+                'prediction_error': y_pred_val - y_val,
+                'absolute_error': abs(y_pred_val - y_val),
+            }
+        )
+        predictions_location = f"./data/training_outputs/{run_id}"
+        train_predictions_location = f"{predictions_location}/train_predictions.csv"
+        val_predictions_location = f"{predictions_location}/val_predictions.csv"
+
+        os.makedirs(predictions_location, exist_ok=True)
+        training_dataset.to_csv(train_predictions_location, index=False)
+        validation_dataset.to_csv(val_predictions_location, index=False)
+        print(f"Training dataset with predictions saved to: {train_predictions_location}")
+        print(f"Validation dataset with predictions saved to: {val_predictions_location}")
 
         # Log the predictions file as an MLflow artifact
-        mlflow.log_artifact(predictions_file, artifact_path="predictions")
-        
+        mlflow.log_artifact(train_predictions_location, artifact_path="predictions")
+        mlflow.log_artifact(val_predictions_location, artifact_path="predictions")
+
         # Log additional metrics for analysis
-        mean_absolute_error = validation_dataset['absolute_error'].mean()
-        median_absolute_error = validation_dataset['absolute_error'].median()
-        mlflow.log_metric("mean_absolute_error", mean_absolute_error)
-        mlflow.log_metric("median_absolute_error", median_absolute_error)
+        val_mean_absolute_error = validation_dataset['absolute_error'].mean()
+        val_median_absolute_error = validation_dataset['absolute_error'].median()
+        mlflow.log_metric("val_mean_absolute_error", val_mean_absolute_error)
+        mlflow.log_metric("val_median_absolute_error", val_median_absolute_error)
+
+        train_mean_absolute_error = training_dataset['absolute_error'].mean()
+        train_median_absolute_error = training_dataset['absolute_error'].median()
+        mlflow.log_metric("train_mean_absolute_error", train_mean_absolute_error)
+        mlflow.log_metric("train_median_absolute_error", train_median_absolute_error)
 
         with open("models/preprocessor.b", "wb") as f_out:
             pickle.dump(dv, f_out)
@@ -175,4 +188,4 @@ if __name__ == "__main__":
     parser.add_argument('--month', type=int, required=True, help='Month of the data to train on')
     args = parser.parse_args()
 
-    run_id = run(year=args.year, month=args.month)
+    run(year=args.year, month=args.month)
