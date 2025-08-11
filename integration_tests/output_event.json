@@ -1,0 +1,13 @@
+{
+    "predictions": [
+        {
+            "statusCode": 200,
+            "model": "ride_duration_prediction_test",
+            "version": "70123647ea1f49a2889fcff4d7032960",
+            "prediction": {
+                "ride_id": 123,
+                "predicted_duration": 41.28146743774414
+            }
+        }
+    ]
+}

@@ -65,20 +65,3 @@ fi
 
 echo "All tests successful!"
 docker-compose down
-
-
-
-# SHARD_ITERATOR=$(aws kinesis --endpoint-url ${LOCAL_KINESIS_ENDPOINT} \
-#   get-shard-iterator \
-#   --stream-name ${PREDICTIONS_STREAM_NAME} \
-#   --shard-id ${SHARD_ID} \
-#   --shard-iterator-type TRIM_HORIZON \
-#   --query 'ShardIterator' \
-#   --output text)
-
-# RESULT=$(aws kinesis --endpoint-url ${LOCAL_KINESIS_ENDPOINT} \
-#   get-records \
-#   --shard-iterator ${SHARD_ITERATOR})
-
-# echo ${RESULT} | jq -r '.Records[-1].Data' | base64 --decode # get the last record's data
-

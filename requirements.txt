@@ -9,3 +9,6 @@ scipy==1.15.3
 xgboost==3.0.3
 pytest==8.4.1
 deepdiff==8.5.0
+pylint==3.3.8
+black==25.1.0
+isort==6.0.1
