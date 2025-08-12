@@ -6,6 +6,10 @@ REMOTE_TAG="v2"
 REMOTE_IMAGE_NAME=${REMOTE_URI}:${REMOTE_TAG}
 
 
+setup:
+	echo "Formatting code..."
+	pre-commit install
+
 code_formatting:
 	echo "Formatting code..."
 	isort .
@@ -30,3 +34,4 @@ deploy: build
 
 	docker tag ${LOCAL_IMAGE_NAME} ${REMOTE_IMAGE_NAME}
 	docker push ${REMOTE_IMAGE_NAME}
+	echo "Deployment completed successfully. Image pushed to ${REMOTE_IMAGE_NAME}"

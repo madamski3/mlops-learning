@@ -14,3 +14,7 @@ scripts/
 # Artifacts cached locally
 data/
 models/
+
+# Terraform files
+.terraform/
+*.tfstate.*
