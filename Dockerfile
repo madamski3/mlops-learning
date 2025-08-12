@@ -3,7 +3,7 @@ FROM python:3.13-slim as builder
 
 # Install build dependencies
 RUN apt-get update && \
-    apt-get install -y gcc g++ python3-dev && \
+    apt-get install -y gcc g++ python3-dev make && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Python packages to a target directory
