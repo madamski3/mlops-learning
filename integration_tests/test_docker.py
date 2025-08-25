@@ -11,11 +11,14 @@ from lambda_function import lambda_handler
 
 
 def test_lambda_invocation():
-    with open('input_event.json', 'r', encoding='utf-8') as f_i:
+    # Get the directory of this test file to find JSON files
+    test_dir = os.path.dirname(os.path.abspath(__file__))
+
+    with open(os.path.join(test_dir, 'input_event.json'), 'r', encoding='utf-8') as f_i:
         input_event = json.load(f_i)
     actual_response = lambda_handler(input_event, None)
 
-    with open('output_event.json', 'r', encoding='utf-8') as f_o:
+    with open(os.path.join(test_dir, 'output_event.json'), 'r', encoding='utf-8') as f_o:
         expected_response = json.load(f_o)
 
     diff = DeepDiff(actual_response, expected_response, significant_digits=1)
