@@ -6,10 +6,12 @@ test.py
 mlflow.db
 .claude/
 CLAUDE.md
+ML_PIPELINE_OVERVIEW.md
 .pytest_cache/
 
-# bash files used for local testing
-scripts/
+# Bash files used for local testing
+# NOTE: This is separate from the scripts folder, which contains scripts useful for
+dev-tools/
 
 # Artifacts cached locally
 data/
