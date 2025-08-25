@@ -32,10 +32,15 @@ variable "ride_predictions_stream_name" {
   default     = "ride-predictions"
 }
 
-variable "bucket_name" {
+variable "dev_bucket_name" {
   description = "The name of the S3 bucket where ML artifacts are stored"
   type        = string
   default     = "mlops-learning-madamski"
+}
+
+variable "prod_bucket_name" {
+  description = "The name of the S3 bucket where ML artifacts are stored"
+  type        = string
 }
 
 variable "repository_name" {

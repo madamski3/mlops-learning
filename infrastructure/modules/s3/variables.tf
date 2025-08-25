@@ -1,7 +1,12 @@
-variable "bucket_name" {
-  description = "The name of the S3 bucket to create."
+variable "dev_bucket_name" {
+  description = "The name of the S3 bucket that MLFlow experiments will be saved to"
   type        = string
   default     = "mlops-learning-madamski"
+}
+
+variable "prod_bucket_name" {
+  description = "The name of the S3 bucket that will store the prod model"
+  type        = string
 }
 
 variable "tags" {

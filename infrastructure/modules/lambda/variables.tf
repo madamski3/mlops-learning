@@ -9,7 +9,12 @@ variable "image_uri" {
 }
 
 variable "model_bucket" {
-  description = "ARN of the kinesis stream that we will send model predictions to"
+  description = "Name of the production S3 bucket for ML models"
+  type        = string
+}
+
+variable "dev_bucket" {
+  description = "Name of the development S3 bucket for ML models"
   type        = string
 }
 

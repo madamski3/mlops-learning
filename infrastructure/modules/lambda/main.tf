@@ -3,17 +3,18 @@ resource "aws_lambda_function" "model_lambda" {
   image_uri     = var.image_uri
   package_type  = "Image"
   role          = aws_iam_role.model_lambda_role.arn
+  memory_size   = 1536
+  timeout       = 90
   tracing_config {
     mode = "Active"
   }
   environment {
     variables = {
-      MODEL_BUCKET            = var.model_bucket
+      MODEL_S3_BUCKET         = var.model_bucket
       PREDICTIONS_STREAM_NAME = var.output_stream_name
       RUN_ID                  = "70123647ea1f49a2889fcff4d7032960"
     }
   }
-  timeout = 300
 }
 
 resource "aws_lambda_function_event_invoke_config" "kinesis_lambda_event" {

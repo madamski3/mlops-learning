@@ -29,7 +29,8 @@ module "kinesis_streams" {
 
 module "s3_buckets" {
   source      = "./modules/s3"
-  bucket_name = var.bucket_name
+  dev_bucket_name = var.dev_bucket_name
+  prod_bucket_name = var.prod_bucket_name
   tags        = var.tags
 }
 
@@ -39,6 +40,7 @@ module "ecr" {
   lambda_function_local_path = var.lambda_function_local_path
   docker_image_local_path    = var.docker_image_local_path
   image_tag                  = var.image_tag
+  region                     = var.region
   # account_id                 = local.account_id
 }
 
@@ -46,7 +48,8 @@ module "lambda" {
   source = "./modules/lambda"
   image_uri = module.ecr.image_uri
   lambda_function_name = var.lambda_function_name
-  model_bucket = module.s3_buckets.bucket_name
+  model_bucket = module.s3_buckets.prod_bucket_name
+  dev_bucket = module.s3_buckets.dev_bucket_name
   source_stream_arn = module.kinesis_streams.ride_events_stream_arn
   source_stream_name = var.ride_event_stream_name
   output_stream_arn = module.kinesis_streams.ride_predictions_stream_arn
