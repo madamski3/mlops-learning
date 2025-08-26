@@ -3,13 +3,17 @@ services:
     image: ${LOCAL_IMAGE_NAME}
     ports:
       - "9999:9999"
-    env_file:
-      - ../.env
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-us-east-2}
+      - TEST_RUN=${TEST_RUN:-false}
+      - KINESIS_ENDPOINT_URL=${KINESIS_ENDPOINT_URL:-http://localhost:4566/}
+      - PREDICTIONS_STREAM_NAME=${PREDICTIONS_STREAM_NAME:-ride-predictions}
   kinesis:
     image: localstack/localstack
     ports:
       - "4566:4566"
     environment:
       - SERVICES=kinesis
-    env_file:
-      - ../.env
+      - DEBUG=${DEBUG:-0}
