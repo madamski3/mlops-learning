@@ -39,14 +39,14 @@ jobs:
       - name: Install Docker Compose & Setup
         run: sudo apt-get update && sudo apt-get install -y docker-compose
         env:
-          TEST_RUN: "true"
+          TEST_RUN: "false"
           KINESIS_ENDPOINT_URL: "http://localhost:4566/"
           PREDICTIONS_STREAM_NAME: "ride-predictions"
 
       - name: Run integration tests
         run: cd integration_tests && ./run.sh
         env:
-          TEST_RUN: "true"
+          TEST_RUN: "false"
           KINESIS_ENDPOINT_URL: "http://localhost:4566/"
           PREDICTIONS_STREAM_NAME: "ride-predictions"
 
