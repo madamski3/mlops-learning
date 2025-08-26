@@ -1,13 +1,11 @@
 variable "ride_event_stream_name" {
   description = "The name of the Kinesis stream for ride events"
   type        = string
-  default     = "ride-events"
 }
 
 variable "ride_predictions_stream_name" {
   description = "The name of the Kinesis stream that predictions will be sent to"
   type        = string
-  default     = "ride-predictions"
 }
 
 variable "shard_count" {

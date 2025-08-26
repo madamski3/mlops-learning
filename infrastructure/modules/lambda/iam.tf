@@ -12,7 +12,7 @@ data "aws_iam_policy_document" "lambda_assume_role" {
 }
 
 resource "aws_iam_role" "model_lambda_role" {
-  name               = "model_lambda_role"
+  name               = var.lambda_role_name
   assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
 }
 
@@ -37,7 +37,7 @@ data "aws_iam_policy_document" "kinesis_input_access" {
 }
 
 resource "aws_iam_policy" "allow_kinesis_processing" {
-  name        = "allow_kinesis_processing"
+  name        = var.kinesis_read_policy_name
   path        = "/"
   description = "IAM policy for reading from kinesis stream"
   policy      = data.aws_iam_policy_document.kinesis_input_access.json
@@ -61,7 +61,7 @@ data "aws_iam_policy_document" "kinesis_output_access" {
 }
 
 resource "aws_iam_policy" "kinesis_output_access" {
-  name        = "kinesis_output_access"
+  name        = var.kinesis_write_policy_name
   description = "IAM policy for writing to kinesis output stream"
   policy      = data.aws_iam_policy_document.kinesis_output_access.json
 }
@@ -94,7 +94,7 @@ data "aws_iam_policy_document" "cloudwatch_logs" {
 }
 
 resource "aws_iam_policy" "allow_logging" {
-  name        = "allow_logging"
+  name        = var.cloudwatch_log_policy_name
   path        = "/"
   description = "IAM policy for logging from a lambda"
   policy      = data.aws_iam_policy_document.cloudwatch_logs.json
@@ -145,7 +145,7 @@ data "aws_iam_policy_document" "s3_model_access" {
 }
 
 resource "aws_iam_policy" "model_lambda_s3_policy" {
-  name        = "model_lambda_s3_policy"
+  name        = var.s3_access_policy_name
   description = "IAM policy for lambda accessing S3"
   policy      = data.aws_iam_policy_document.s3_model_access.json
 }

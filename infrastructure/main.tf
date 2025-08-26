@@ -54,4 +54,9 @@ module "lambda" {
   source_stream_name = var.ride_event_stream_name
   output_stream_arn = module.kinesis_streams.ride_predictions_stream_arn
   output_stream_name = var.ride_predictions_stream_name
+  lambda_role_name = var.lambda_role_name
+  kinesis_read_policy_name = var.kinesis_read_policy_name
+  kinesis_write_policy_name = var.kinesis_write_policy_name
+  cloudwatch_log_policy_name = var.cloudwatch_log_policy_name
+  s3_access_policy_name = var.s3_access_policy_name
 }

@@ -37,3 +37,28 @@ variable "source_stream_name" {
   description = "Name of the kinesis stream that ride events will be sourced from"
   type        = string
 }
+
+variable "lambda_role_name" {
+  description = "Name of the role that will be given to the lambda function"
+  type = string
+}
+
+variable "kinesis_read_policy_name" {
+  description = "Name of the IAM policy allowing the Lambda role to read from Kinesis"
+  type = string
+}
+
+variable "kinesis_write_policy_name" {
+  description = "Name of the IAM policy allowing the Lambda role to write to Kinesis"
+  type = string
+}
+
+variable "cloudwatch_log_policy_name" {
+  description = "Name of the IAM policy allowing the Lambda role to write to Kinesis"
+  type = string
+}
+
+variable "s3_access_policy_name" {
+  description = "Name of the IAM policy allowing the Lambda role to write to Kinesis"
+  type = string
+}

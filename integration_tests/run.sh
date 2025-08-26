@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
-# set -e # exit with nonzero error code on first error
-
-cd "$(dirname "$0")"
+if [[ -z "${GITHUB_ACTIONS}" ]]; then
+    cd "$(dirname "$0")"
+fi
 
 LOCAL_TAG=`date +"%Y-%m-%d_%H%M"`
-export LOCAL_IMAGE_NAME="ride-prediction-service:${LOCAL_TAG}"
+export LOCAL_IMAGE_NAME="ride-prediction-service-dev:${LOCAL_TAG}"
 export LOCAL_KINESIS_ENDPOINT="http://localhost:4566/"
 export PREDICTIONS_STREAM_NAME='ride-predictions'
 export SHARD_ID='shardId-000000000000'
