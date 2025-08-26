@@ -2,7 +2,7 @@ name: CI Tests
 on:
   pull_request:
     branches:
-      - "main"
+      - "develop"
 env:
   AWS_DEFAULT_REGION: "us-east-2"
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
