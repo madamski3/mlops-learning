@@ -31,17 +31,28 @@ aws --endpoint-url ${LOCAL_KINESIS_ENDPOINT} \
     --shard-count 1
 sleep 2
 
-# Source conda and activate mlops environment
-eval "$(conda shell.bash hook)"
-conda activate mlops
+# Source conda and activate mlops environment (skip in CI)
+if [[ -z "${GITHUB_ACTIONS}" ]]; then
+    eval "$(conda shell.bash hook)"
+    conda activate mlops
+else
+    # In GitHub Actions, use the already installed Python
+    export CONDA_DEFAULT_ENV="CI"
+fi
 
 # Verify we're in the right environment
 echo "Active conda environment: $CONDA_DEFAULT_ENV"
 
 # Source environment variables
-set -a  # automatically export all variables
-source ../.env
-set +a
+if [[ -z "${GITHUB_ACTIONS}" ]]; then
+    # Local development - source .env file
+    set -a  # automatically export all variables
+    source ../.env
+    set +a
+else
+    # CI environment - variables already available from GitHub Secrets
+    echo "Using environment variables from CI"
+fi
 
 # Run the Docker integration tests and log any error codes
 echo "Running Docker integration tests..."

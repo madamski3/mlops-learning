@@ -36,8 +36,19 @@ jobs:
           aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_DEFAULT_REGION }}
 
+      - name: Install Docker Compose & Setup
+        run: sudo apt-get update && sudo apt-get install -y docker-compose
+        env:
+          TEST_RUN: "true"
+          KINESIS_ENDPOINT_URL: "http://localhost:4566/"
+          PREDICTIONS_STREAM_NAME: "ride-predictions"
+
       - name: Run integration tests
-        run: integration_tests/run.sh
+        run: cd integration_tests && ./run.sh
+        env:
+          TEST_RUN: "true"
+          KINESIS_ENDPOINT_URL: "http://localhost:4566/"
+          PREDICTIONS_STREAM_NAME: "ride-predictions"
 
   terraform-plan:
     runs-on: ubuntu-latest
