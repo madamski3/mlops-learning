@@ -1,0 +1,100 @@
+name: CD Deployment
+on:
+  push:
+    branches:
+      - "develop"
+
+env:
+  AWS_DEFAULT_REGION: "us-east-2"
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+jobs:
+  build-push-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out project repo
+        uses: actions/checkout@v2
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.13
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_DEFAULT_REGION }}
+
+      # Define current AWS infrastructure
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_wrapper: false
+
+      - name: Create Terraform plan
+        id: tf-plan
+        working-directory: "./infrastructure"
+        run: terraform init -backend-config="key=mlops-environment-prod.tfstate" --reconfigure && terraform plan -var-file=vars/prod.tfvars
+
+      - name: Apply Terraform infrastructure
+        id: tf-apply
+        working-directory: "./infrastructure"
+        if: ${{ steps.tf-plan.outcome }} == 'success'
+        run: |
+          terraform apply -auto-approve -var-file=vars/prod.tfvars
+          echo "::set-output name=ecr_repository::$(terraform output ecr_repository | xargs)"
+          echo "::set-output name=predictions_stream_name::$(terraform output predictions_stream_name | xargs)"
+          echo "::set-output name=model_bucket::$(terraform output model_bucket | xargs)"
+          echo "::set-output name=lambda_function::$(terraform output lambda_function | xargs)"
+
+      # Build Docker image and push to ECR
+      - name: Login to ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build image and push to ECR
+        id: build-image
+        working-directory: "./"
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ steps.tf-apply.outputs.ecr_repository }}
+          IMAGE_TAG: "latest"
+        run: |
+          docker build -t ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG} .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "::set-output name=image_uri::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+      - name: Get model artifacts
+        id: get-artifacts
+        env:
+          SOURCE_BUCKET: "mlops-learning-madamski"
+          DESTINATION_BUCKET: ${{ steps.tf-apply.outputs.model_bucket }}
+        run: |
+          export RUN_ID=$(aws s3api list-objects-v2 --bucket ${SOURCE_BUCKET} \
+          --query 'sort_by(Contents[?!starts_with(Key, `1/models/`)], &LastModified)[-1].Key' --output=text | cut -f2 -d/)
+          aws s3 sync s3://${SOURCE_BUCKET} s3://${DESTINATION_BUCKET}
+          echo "::set-output name=run_id::${RUN_ID}"
+
+      - name: Update Lambda configuration
+        id: update-lambda-config
+        env:
+          DESTINATION_LAMBDA_FUNCTION: ${{ steps.tf-apply.outputs.lambda_function }}
+          DESTINATION_STREAM_NAME: ${{ steps.tf-apply.outputs.predictions_stream_name }}
+          DESTINATION_BUCKET: ${{ steps.tf-apply.outputs.model_bucket }}
+          RUN_ID: ${{ steps.get-artifacts.outputs.run_id }}
+        run: |
+          variables="{PREDICTIONS_STREAM_NAME=${DESTINATION_STREAM_NAME}, MODEL_BUCKET=${DESTINATION_BUCKET}, RUN_ID=${RUN_ID}}"
+
+          STATE=$(aws lambda get-function --function-name $DESTINATION_LAMBDA_FUNCTION --region $AWS_DEFAULT_REGION --query 'Configuration.LastUpdateStatus' --output text)
+              while [[ "$STATE" == "InProgress" ]]
+              do
+                  echo "sleep 5sec ...."
+                  sleep 5s
+                  STATE=$(aws lambda get-function --function-name $DESTINATION_LAMBDA_FUNCTION --region $AWS_DEFAULT_REGION --query 'Configuration.LastUpdateStatus' --output text)
+                  echo $STATE
+              done
+
+          aws lambda update-function-configuration --function-name $DESTINATION_LAMBDA_FUNCTION --environment "Variables=${variables}"
