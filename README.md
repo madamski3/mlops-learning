@@ -1,4 +1,6 @@
 # NYC Taxi Trip Duration Prediction - MLOps Pipeline
+[![CI Tests](https://github.com/madamski3/mlops-learning/actions/workflows/ci-test.yml/badge.svg)](https://github.com/madamski3/mlops-learning/actions/workflows/ci-test.yml)
+[![CD Deployment](https://github.com/madamski3/mlops-learning/actions/workflows/cd-deploy.yml/badge.svg)](https://github.com/madamski3/mlops-learning/actions/workflows/cd-deploy.yml)
 
 An end-to-end MLOps pipeline for predicting NYC taxi trip duration using XGBoost, with real-time inference via AWS Lambda and Kinesis.
 
