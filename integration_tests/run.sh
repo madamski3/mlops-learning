@@ -21,27 +21,52 @@ sleep 1
 echo "Building image and pushing to container..."
 docker build -t ${LOCAL_IMAGE_NAME} ..
 docker-compose up -d
-sleep 5
 
-# Wait for LocalStack to be ready and create Kinesis stream
+# Wait for LocalStack to be ready
+echo "Waiting for LocalStack to start..."
+sleep 10
+
+# Health check for LocalStack
+echo "Checking LocalStack health..."
+for i in {1..30}; do
+    if curl -s ${LOCAL_KINESIS_ENDPOINT}/_localstack/health | grep -q '"kinesis": "available"'; then
+        echo "LocalStack is ready!"
+        break
+    fi
+    echo "Waiting for LocalStack... (attempt $i/30)"
+    sleep 2
+done
+
+# Create Kinesis stream
 echo "Creating local Kinesis stream..."
 aws --endpoint-url ${LOCAL_KINESIS_ENDPOINT} \
     kinesis create-stream \
     --stream-name ${PREDICTIONS_STREAM_NAME} \
-    --shard-count 1
-sleep 2
+    --shard-count 1 || echo "Stream may already exist"
+sleep 5
 
-# Source conda and activate mlops environment
-eval "$(conda shell.bash hook)"
-conda activate mlops
+# Source conda and activate mlops environment (skip in CI)
+if [[ -z "${GITHUB_ACTIONS}" ]]; then
+    eval "$(conda shell.bash hook)"
+    conda activate mlops
+else
+    # In GitHub Actions, use the already installed Python
+    export CONDA_DEFAULT_ENV="CI"
+fi
 
 # Verify we're in the right environment
 echo "Active conda environment: $CONDA_DEFAULT_ENV"
 
 # Source environment variables
-set -a  # automatically export all variables
-source ../.env
-set +a
+if [[ -z "${GITHUB_ACTIONS}" ]]; then
+    # Local development - source .env file
+    set -a  # automatically export all variables
+    source ../.env
+    set +a
+else
+    # CI environment - variables already available from GitHub Secrets
+    echo "Using environment variables from CI"
+fi
 
 # Run the Docker integration tests and log any error codes
 echo "Running Docker integration tests..."
