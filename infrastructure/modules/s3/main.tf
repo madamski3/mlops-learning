@@ -8,7 +8,8 @@ output "dev_bucket_name" {
 }
 
 resource "aws_s3_bucket" "prod_s3_bucket" {
-  bucket = var.prod_bucket_name
+  bucket        = var.prod_bucket_name
+  force_destroy = true
 }
 
 output "prod_bucket_name" {
